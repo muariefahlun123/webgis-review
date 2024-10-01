@@ -1,3 +1,6 @@
+// Inisialisasi array untuk menyimpan semua layer yang diunggah
+var uploadedLayers = [];
+
 // map class initialize 
 var map = L.map('map').setView(
     [-6.216975869705126, 106.85245752981449], 10);
@@ -21,7 +24,7 @@ var googleSatellite = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&
     attribution: '&copy; <a href="https://www.google.com/permissions/geoguidelines.html">Google</a>'
 });
 
-//Open Street Maps
+// Open Street Maps
 var osm = L.tileLayer('https://{s}.tile.h.org/{z}/{x}/{y}.png', {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> '
 });
@@ -42,7 +45,7 @@ var darkBaseMap = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x
 
 // Add marker in the center of map
 var singleMarker = L.marker([-6.216975869705126, 106.85245752981449])
-    .bindPopup('A pretty CSS3 popup.<br> Easily customizable.')
+    .bindPopup('A pretty CSS3 popup.<br> Easily customizable.');
 
 // Add map scale
 L.control.scale().addTo(map);
@@ -52,15 +55,7 @@ map.on('mousemove', function (e) {
     $('.coordinate').html(`Lat: ${e.latlng.lat.toFixed(4)} Lng: ${e.latlng.lng.toFixed(4)}`);
 });
 
-// Add Geojson File
-// Tambahkan layer GeoJSON dari data.js
-//
-//
-//
-//
-
-
-/// Function to handle file upload
+// Function to handle file upload
 function handleFileUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -78,11 +73,8 @@ function handleFileUpload(event) {
 
 // Function to display the Shapefile on the map
 function displayShapefile(geojson, fileName) {
-    if (window.shapefileLayer) {
-        map.removeLayer(window.shapefileLayer);
-        layerControl.removeLayer(window.shapefileLayer);
-    }
-    window.shapefileLayer = L.geoJSON(geojson, {
+    // Membuat layer baru untuk shapefile yang diunggah
+    var shapefileLayer = L.geoJSON(geojson, {
         style: function(feature) {
             return {
                 color: "#df0000",
@@ -98,15 +90,23 @@ function displayShapefile(geojson, fileName) {
             }
         }
     }).addTo(map);
-    map.fitBounds(window.shapefileLayer.getBounds());
-    updateLayerControl(fileName);
+    
+    // Memasukkan layer baru ke dalam array `uploadedLayers`
+    uploadedLayers.push(shapefileLayer);
+
+    // Menyesuaikan tampilan peta untuk mencakup semua layer
+    map.fitBounds(shapefileLayer.getBounds());
+    
+    // Memperbarui kontrol layer dengan nama file
+    updateLayerControl(fileName, shapefileLayer);
 }
 
 // Fungsi untuk memperbarui kontrol layer dengan nama file
-function updateLayerControl(fileName) {
-    if (window.shapefileLayer) {
+function updateLayerControl(fileName, shapefileLayer) {
+    if (shapefileLayer) {
+        // Mengambil nama file tanpa ekstensi untuk dijadikan nama layer
         let layerName = fileName ? fileName.split('.')[0] : 'Shapefile yang Diupload';
-        layerControl.addOverlay(window.shapefileLayer, layerName);
+        layerControl.addOverlay(shapefileLayer, layerName);
     }
 }
 
@@ -133,12 +133,3 @@ var layerControl = L.control.layers(baseMaps, overlayMaps, {
     collapsed: true,  // Set to false to make the layer control visible
     position: 'topleft'
 }).addTo(map);
-
-// Fungsi untuk memperbarui kontrol layer dengan nama file
-function updateLayerControl(fileName) {
-    if (window.shapefileLayer) {
-        // Mengambil nama file tanpa ekstensi untuk dijadikan nama layer
-        let layerName = fileName ? fileName.split('.')[0] : 'Shapefile yang Diupload';
-        layerControl.addOverlay(window.shapefileLayer, layerName);
-    }
-}
